@@ -14,6 +14,9 @@ install:
 # command to run tests
 # notice: the nose-cov is used because it is compatible with --processes, but produce a .coverage by process
 # so we must combine them in the end
+before_script:
+  - alignak_backend run &
+  - sleep 1 # give it some time to start
 script:
   - cd test
   - pip freeze  # so to help eventual debug: know what exact versions are in use can be rather useful.

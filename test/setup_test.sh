@@ -38,4 +38,3 @@ then
 fi
 
 python setup.py install
-alignak_backend run &
