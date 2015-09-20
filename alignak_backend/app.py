@@ -246,7 +246,9 @@ class Application(Log):
         @self.app.route("/login", methods=['POST'])
         def login_app():
             post_data = request.get_json()
-            if 'username' not in post_data or 'password' not in post_data:
+            if post_data is None:
+                abort(401, description='Please provide proper credentials')
+            elif 'username' not in post_data or 'password' not in post_data:
                 abort(401, description='Please provide proper credentials')
             elif post_data['username'] == '' or post_data['password'] == '':
                 abort(401, description='Please provide proper credentials')

@@ -9,4 +9,5 @@ nose
 pylint
 pep8
 pep257
+requests
 
