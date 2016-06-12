@@ -57,6 +57,16 @@ def get_schema():
                 'regex': '^[^`~!$%^&*"|\'<>?,()=]+$',
                 'dependencies': ['host_name', 'check_command']
             },
+            'livestate': {
+                'type': 'objectid',
+                'ui': {
+                    'title': 'Service live state',
+                },
+                'data_relation': {
+                    'resource': 'livestate',
+                    'embeddable': True
+                }
+            },
             'customs': {
                 'type': 'dict',
                 'default': {}

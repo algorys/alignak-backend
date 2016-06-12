@@ -118,6 +118,13 @@ class TestHookLivestate(unittest2.TestCase):
         self.assertEqual(r[0]['business_impact'], 5)
         self.assertEqual(r[0]['type'], 'host')
 
+        # Check if host is linked to livestate
+        response = requests.get(self.endpoint + '/host', params=sort_id, auth=self.auth)
+        resp = response.json()
+        rh = resp['_items']
+        self.assertEqual(rh[0]['name'], "srv001")
+        self.assertEqual(rh[0]['livestate'], r[0]['_id'])
+
     def test_add_service(self):
         """
         Test the livestate hook to create a livestate resource when create a new service
@@ -171,6 +178,13 @@ class TestHookLivestate(unittest2.TestCase):
         self.assertEqual(r[1]['service_description'], rs[0]['_id'])
         self.assertEqual(r[1]['type'], 'service')
 
+        # Check if host is linked to livestate
+        response = requests.get(self.endpoint + '/service', params=sort_id, auth=self.auth)
+        resp = response.json()
+        rs = resp['_items']
+        self.assertEqual(rs[0]['name'], "ping")
+        self.assertEqual(rs[0]['livestate'], r[1]['_id'])
+
     def test_update_host_business_impact(self):
         """
         Test the livestate hook update the field business_impact in livestate resource when
@@ -202,13 +216,18 @@ class TestHookLivestate(unittest2.TestCase):
         requests.post(self.endpoint + '/host', json=data, headers=headers, auth=self.auth)
 
         # Update business_impact
+        # - get host to refresh _etag
+        data = {"name": "srv001"}
+        response_get = requests.get(self.endpoint + '/host', json=data, auth=self.auth)
+        rhost = response_get.json()['_items']
+
         datap = {'business_impact': 1}
         headers_patch = {
             'Content-Type': 'application/json',
-            'If-Match': rh['_etag']
+            'If-Match': rhost[0]['_etag']
         }
-        requests.patch(self.endpoint + '/host/' + rh['_id'], json=datap, headers=headers_patch,
-                       auth=self.auth)
+        response = requests.patch(self.endpoint + '/host/' + rhost[0]['_id'], json=datap,
+                                  headers=headers_patch, auth=self.auth)
 
         # check if business_impact of host changed
         params = {'sort': 'name'}
@@ -265,13 +284,18 @@ class TestHookLivestate(unittest2.TestCase):
         rs = response.json()
 
         # Update business_impact
+        # - get service to refresh _etag
+        data = {"host_name": "srv001", "name": "ping"}
+        response_get = requests.get(self.endpoint + '/service', json=data, auth=self.auth)
+        rservice = response_get.json()['_items']
+
         datap = {'business_impact': 1}
         headers_patch = {
             'Content-Type': 'application/json',
-            'If-Match': rs['_etag']
+            'If-Match': rservice[0]['_etag']
         }
-        requests.patch(self.endpoint + '/service/' + rs['_id'], json=datap, headers=headers_patch,
-                       auth=self.auth)
+        requests.patch(self.endpoint + '/service/' + rservice[0]['_id'], json=datap,
+                       headers=headers_patch, auth=self.auth)
 
         # check if business_impact of service changed
         response = requests.get(self.endpoint + '/service', params=sort_id, auth=self.auth)
@@ -357,12 +381,17 @@ class TestHookLivestate(unittest2.TestCase):
         self.assertEqual(r[0]['display_name_host'], 'Server 001: srv001')
 
         # * Case we update host host_name
+        # - get host to refresh _etag
+        data = {"name": "srv001"}
+        response_get = requests.get(self.endpoint + '/host', json=data, auth=self.auth)
+        rhost = response_get.json()['_items']
+
         datap = {'name': 'srv001-1'}
         headers_patch = {
             'Content-Type': 'application/json',
-            'If-Match': rh['_etag']
+            'If-Match': rhost[0]['_etag']
         }
-        responseph = requests.patch(self.endpoint + '/host/' + rh['_id'], json=datap,
+        responseph = requests.patch(self.endpoint + '/host/' + rhost[0]['_id'], json=datap,
                                     headers=headers_patch, auth=self.auth)
         rh = responseph.json()
         response = requests.get(self.endpoint + '/livestate', params=sort_id, auth=self.auth)
@@ -422,10 +451,15 @@ class TestHookLivestate(unittest2.TestCase):
         self.assertEqual(r[0]['display_name_host'], 'Server 001: srv001 alias')
 
         # * Case we update host alias
+        # - get host to refresh _etag
+        data = {"name": "srv001"}
+        response_get = requests.get(self.endpoint + '/host', json=data, auth=self.auth)
+        rhost = response_get.json()['_items']
+
         datap = {'alias': 'srv001 alias beta'}
         headers_patch = {
             'Content-Type': 'application/json',
-            'If-Match': rh['_etag']
+            'If-Match': rhost[0]['_etag']
         }
         responseph = requests.patch(self.endpoint + '/host/' + rh['_id'], json=datap,
                                     headers=headers_patch, auth=self.auth)
@@ -502,12 +536,17 @@ class TestHookLivestate(unittest2.TestCase):
         self.assertEqual(r[0]['display_name_host'], 'srv001')
 
         # * Case we update host host_name
+        # - get host to refresh _etag
+        data = {"name": "srv001"}
+        response_get = requests.get(self.endpoint + '/host', json=data, auth=self.auth)
+        rhost = response_get.json()['_items']
+
         datap = {'name': 'srv001-1'}
         headers_patch = {
             'Content-Type': 'application/json',
-            'If-Match': rh['_etag']
+            'If-Match': rhost[0]['_etag']
         }
-        responseph = requests.patch(self.endpoint + '/host/' + rh['_id'], json=datap,
+        responseph = requests.patch(self.endpoint + '/host/' + rhost[0]['_id'], json=datap,
                                     headers=headers_patch, auth=self.auth)
         rh = responseph.json()
         response = requests.get(self.endpoint + '/livestate', params=sort_id, auth=self.auth)
@@ -640,12 +679,17 @@ class TestHookLivestate(unittest2.TestCase):
         self.assertEqual(resp['_items'][1]['display_name_service'], 'ping check of server srv001')
 
         # * Case we update service service_description
+        # - get service to refresh _etag
+        data = {"host_name": "srv001", "name": "ping"}
+        response_get = requests.get(self.endpoint + '/service', json=data, auth=self.auth)
+        rservice = response_get.json()['_items']
+
         datap = {'name': 'check_ping'}
         headers_patch = {
             'Content-Type': 'application/json',
-            'If-Match': rs['_etag']
+            'If-Match': rservice[0]['_etag']
         }
-        responseph = requests.patch(self.endpoint + '/service/' + rs['_id'], json=datap,
+        responseph = requests.patch(self.endpoint + '/service/' + rservice[0]['_id'], json=datap,
                                     headers=headers_patch, auth=self.auth)
         rs = responseph.json()
         response = requests.get(self.endpoint + '/livestate', params=sort_id, auth=self.auth)
@@ -714,10 +758,15 @@ class TestHookLivestate(unittest2.TestCase):
         self.assertEqual(r[1]['display_name_service'], 'ping check alias')
 
         # * Case we update service alias
+        # - get host to refresh _etag
+        data = {"host_name": "srv001", "name": "ping"}
+        response_get = requests.get(self.endpoint + '/service', json=data, auth=self.auth)
+        rservice = response_get.json()['_items']
+
         datap = {'alias': 'ping check alias (2)'}
         headers_patch = {
             'Content-Type': 'application/json',
-            'If-Match': rs['_etag']
+            'If-Match': rservice[0]['_etag']
         }
         responseps = requests.patch(self.endpoint + '/service/' + rs['_id'], json=datap,
                                     headers=headers_patch, auth=self.auth)
@@ -803,12 +852,17 @@ class TestHookLivestate(unittest2.TestCase):
         self.assertEqual(r[1]['display_name_service'], 'ping')
 
         # * Case we update service service_description
+        # - get service to refresh _etag
+        data = {"host_name": "srv001", "name": "ping"}
+        response_get = requests.get(self.endpoint + '/service', json=data, auth=self.auth)
+        rservice = response_get.json()['_items']
+
         datap = {'name': 'ping-1'}
         headers_patch = {
             'Content-Type': 'application/json',
-            'If-Match': rs['_etag']
+            'If-Match': rservice[0]['_etag']
         }
-        responseps = requests.patch(self.endpoint + '/service/' + rs['_id'], json=datap,
+        responseps = requests.patch(self.endpoint + '/service/' + rservice[0]['_id'], json=datap,
                                     headers=headers_patch, auth=self.auth)
         rs = responseps.json()
         response = requests.get(self.endpoint + '/livestate', params=sort_id, auth=self.auth)
@@ -883,12 +937,17 @@ class TestHookLivestate(unittest2.TestCase):
         data['_realm'] = self.realm_all
         requests.post(self.endpoint + '/service', json=data, headers=headers, auth=self.auth)
 
+        # - get service to refresh _etag
+        data = {"name": "srv001"}
+        response_get = requests.get(self.endpoint + '/host', json=data, auth=self.auth)
+        rhost = response_get.json()['_items']
+
         datap = {'display_name': 'Server 001: srv001-1'}
         headers_patch = {
             'Content-Type': 'application/json',
-            'If-Match': rh['_etag']
+            'If-Match': rhost[0]['_etag']
         }
-        requests.patch(self.endpoint + '/host/' + rh['_id'], json=datap,
+        requests.patch(self.endpoint + '/host/' + rhost[0]['_id'], json=datap,
                        headers=headers_patch, auth=self.auth)
         response = requests.get(self.endpoint + '/livestate', params=sort_id, auth=self.auth)
         resp = response.json()

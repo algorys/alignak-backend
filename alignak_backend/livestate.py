@@ -63,7 +63,15 @@ class Livestate(object):
                 data['state'] = 'UNREACHABLE'
                 data['state_id'] = 2
                 data['last_state'] = 'UNREACHABLE'
-            post_internal("livestate", data)
+            response, dummy, dummy, cr = post_internal("livestate", data)
+            lv_host_id = response['_id']
+
+            # Update host livestate identifier
+            data = {
+                "livestate": lv_host_id
+            }
+            lookup = {"_id": item['_id']}
+            patch_internal('host', data, False, False, **lookup)
 
     @staticmethod
     def on_inserted_service(items):
@@ -111,7 +119,15 @@ class Livestate(object):
                 data['state'] = 'UNKNOWN'
                 data['state_id'] = 3
                 data['last_state'] = 'UNKNOWN'
-            post_internal("livestate", data)
+            response, dummy, dummy, cr = post_internal("livestate", data)
+            lv_service_id = response['_id']
+
+            # Update service livestate identifier
+            data = {
+                "livestate": lv_service_id
+            }
+            lookup = {"_id": item['_id']}
+            patch_internal('service', data, False, False, **lookup)
 
     @staticmethod
     def on_updated_host(updated, original):
@@ -120,6 +136,9 @@ class Livestate(object):
         """
         if original['_is_template']:
             return
+        if 'livestate' in updated:
+            return
+
         bi = True
         if 'business_impact' not in updated:
             bi = False
@@ -163,6 +182,9 @@ class Livestate(object):
         """
         if original['_is_template']:
             return
+        if 'livestate' in updated:
+            return
+
         bi = True
         if 'business_impact' not in updated:
             bi = False
