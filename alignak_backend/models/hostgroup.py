@@ -54,6 +54,28 @@ def get_schema():
                 'type': 'string',
                 'default': '',
             },
+            '_level': {
+                'type': 'integer',
+                'default': 0,
+            },
+            '_parent': {
+                'type': 'objectid',
+                'data_relation': {
+                    'resource': 'hostgroup',
+                    'embeddable': True
+                },
+            },
+            '_tree_parents': {
+                'type': 'list',
+                'schema': {
+                    'type': 'objectid',
+                    'data_relation': {
+                        'resource': 'hostgroup',
+                        'embeddable': True,
+                    }
+                },
+                'default': []
+            },
             'hostgroups': {
                 'type': 'list',
                 'schema': {
@@ -76,12 +98,13 @@ def get_schema():
                 },
                 'default': []
             },
-            'realm': {
+            '_realm': {
                 'type': 'objectid',
                 'data_relation': {
                     'resource': 'realm',
                     'embeddable': True
-                }
+                },
+                'required': True,
             },
             '_users_read': {
                 'type': 'list',
